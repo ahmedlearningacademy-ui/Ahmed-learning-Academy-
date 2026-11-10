@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123b73">
+  <title>Ahmed Learning Academy | Learning for life</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-mark">A</span><span>AHMED <b>LEARNING ACADEMY</b><small>Learning for life</small></span></a>
+    <nav><a href="#curriculum">Curriculum</a><a href="#how">How it works</a><a href="#account">Student access</a></nav>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">LEARN WITH CONFIDENCE</p>
+        <h1>Build knowledge.<br><span>Reach your potential.</span></h1>
+        <p class="lead">A focused online learning space for students following British and American curricula.</p>
+        <a class="primary" href="#account">Get started</a>
+      </div>
+      <div class="hero-card"><div class="orbit">A</div><p>LEARNING FOR LIFE</p><strong>One academy.<br>More possibilities.</strong></div>
+    </section>
+
+    <section id="curriculum" class="section">
+      <div class="section-heading"><p class="eyebrow">WHAT YOU CAN STUDY</p><h2>Explore the academy</h2><p>Choose a curriculum and explore the subjects available.</p></div>
+      <div class="cards">
+        <article class="subject"><span class="subject-icon">B</span><h3>British Curriculum</h3><p>Structured learning aligned with the British curriculum.</p><span class="tag">British</span></article>
+        <article class="subject"><span class="subject-icon yellow">A</span><h3>American Curriculum</h3><p>Learning resources designed around American standards.</p><span class="tag">American</span></article>
+        <article class="subject"><span class="subject-icon">✦</span><h3>Core Subjects</h3><p>Mathematics, Science, English and Italian.</p><span class="tag">Multiple subjects</span></article>
+      </div>
+    </section>
+
+    <section id="how" class="how section">
+      <div><p class="eyebrow">SIMPLE STUDY FLOW</p><h2>Learn at your pace.</h2></div>
+      <div class="steps"><div><b>01</b><strong>Create an account</strong><p>Register with your email.</p></div><div><b>02</b><strong>Choose your plan</strong><p>Monthly access is EGP 299.</p></div><div><b>03</b><strong>Submit payment proof</strong><p>Transfer with InstaPay and upload your receipt for review.</p></div></div>
+    </section>
+
+    <section id="account" class="section account-section">
+      <div class="section-heading"><p class="eyebrow">STUDENT AREA</p><h2>Sign in or create an account</h2><p>Connect Supabase in the project settings before enabling account access.</p></div>
+      <div class="account-grid">
+        <form id="auth-form" class="panel">
+          <h3>Student sign in</h3>
+          <label>Email<input id="email" type="email" autocomplete="email" required placeholder="you@example.com"></label>
+          <label>Password<input id="password" type="password" autocomplete="current-password" required minlength="6" placeholder="At least 6 characters"></label>
+          <div class="actions"><button class="primary" type="submit">Sign in</button><button class="secondary" id="signup" type="button">Create account</button></div>
+          <p id="auth-message" class="message" role="status"></p>
+        </form>
+        <div class="panel">
+          <h3>Monthly membership</h3><div class="price">EGP 299 <small>/ month</small></div>
+          <p>After transferring through InstaPay, sign in and submit your receipt. An administrator reviews each request before access is activated.</p>
+          <p class="note">InstaPay account details will be added by the academy administrator before launch.</p>
+          <button id="payment-help" class="secondary" type="button">How payment works</button>
+          <p id="payment-message" class="message" role="status"></p>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer><span>© <span id="year"></span> Ahmed Learning Academy</span><span>Learning for life</span></footer>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
