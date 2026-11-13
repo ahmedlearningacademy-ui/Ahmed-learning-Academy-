@@ -58,7 +58,7 @@
         <article class="subject">
           <span class="subject-icon">✦</span>
           <h3>Core Subjects</h3>
-          <p>Mathematics, Science, English and Italian.</p>
+          <p>Math, Science and English.</p>
           <span class="tag">Multiple subjects</span>
         </article>
       </div>
@@ -97,6 +97,7 @@
             <button class="secondary" id="signup" type="button">Create account</button>
           </div>
           <p id="auth-message" class="message" role="status"></p>
+          <button id="signout" class="secondary" type="button" hidden>Sign out</button>
         </form>
 
         <div class="panel">
@@ -116,6 +117,21 @@
         </div>
       </div>
     </section>
+
+    <section id="admin-dashboard" class="section" hidden>
+      <div class="section-heading">
+        <p class="eyebrow">ADMINISTRATION</p>
+        <h2>Payment requests</h2>
+        <p>Review student receipts and manage payment approvals.</p>
+      </div>
+      <div class="panel">
+        <div class="actions">
+          <button id="refresh-requests" class="secondary" type="button">Refresh requests</button>
+        </div>
+        <p id="admin-message" class="message" role="status"></p>
+        <div id="payment-requests-list"></div>
+      </div>
+    </section>
   </main>
 
   <footer>
@@ -126,3 +142,4 @@
   <script type="module" src="app.js"></script>
 </body>
 </html>
+
