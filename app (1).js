@@ -20,27 +20,176 @@ function show(message, target = "auth-message") {
   $(target).textContent = message;
 }
 
-function showPaymentForm(isSignedIn) {
+function setSignedIn(isSignedIn) {
   $("payment-form").hidden = !isSignedIn;
+  $("signout").hidden = !isSignedIn;
+}
+
+async function loadAdminDashboard(user) {
+  $("admin-dashboard").hidden = true;
+
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (error || profile?.role !== "admin") return;
+
+  $("admin-dashboard").hidden = false;
+  await loadPaymentRequests();
+}
+
+async function updateSession(session) {
+  const signedIn = !!session?.user;
+  setSignedIn(signedIn);
+  $("admin-dashboard").hidden = true;
+
+  if (signedIn) {
+    await loadAdminDashboard(session.user);
+  }
+}
+
+async function loadPaymentRequests() {
+  const list = $("payment-requests-list");
+  list.replaceChildren();
+  show("Loading payment requests...", "admin-message");
+
+  const { data: requests, error } = await supabase
+    .from("payment_requests")
+    .select("id, student_id, amount, currency, status, receipt_path, created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return show(error.message, "admin-message");
+  }
+
+  if (!requests || requests.length === 0) {
+    return show("There are no payment requests yet.", "admin-message");
+  }
+
+  show(`${requests.length} payment request(s) found.`, "admin-message");
+
+  for (const request of requests) {
+    const card = document.createElement("article");
+    card.className = "subject";
+
+    const heading = document.createElement("h3");
+    heading.textContent = `Payment: ${request.amount} ${request.currency}`;
+
+    const student = document.createElement("p");
+    student.textContent = `Student ID: ${request.student_id}`;
+
+    const status = document.createElement("p");
+    status.textContent = `Status: ${request.status}`;
+
+    const date = document.createElement("p");
+    date.textContent = `Submitted: ${new Date(request.created_at).toLocaleString()}`;
+
+    card.append(heading, student, status, date);
+
+    if (request.receipt_path) {
+      const { data: fileData, error: fileError } = await supabase.storage
+        .from("payment-receipts")
+        .createSignedUrl(request.receipt_path, 600);
+
+      if (!fileError && fileData?.signedUrl) {
+        const receiptLink = document.createElement("a");
+        receiptLink.href = fileData.signedUrl;
+        receiptLink.target = "_blank";
+        receiptLink.rel = "noopener noreferrer";
+        receiptLink.textContent = "View payment receipt";
+        card.append(receiptLink);
+      } else {
+        const receiptError = document.createElement("p");
+        receiptError.textContent = "Receipt could not be opened.";
+        card.append(receiptError);
+      }
+    }
+
+    if (request.status === "pending") {
+      const actions = document.createElement("div");
+      actions.className = "actions";
+
+      const approve = document.createElement("button");
+      approve.className = "primary";
+      approve.type = "button";
+      approve.textContent = "Approve";
+
+      approve.addEventListener("click", () =>
+        reviewPayment(request.id, "approved")
+      );
+
+      const reject = document.createElement("button");
+      reject.className = "secondary";
+      reject.type = "button";
+      reject.textContent = "Reject";
+
+      reject.addEventListener("click", () =>
+        reviewPayment(request.id, "rejected")
+      );
+
+      actions.append(approve, reject);
+      card.append(actions);
+    }
+
+    list.append(card);
+  }
+}
+
+async function reviewPayment(paymentRequestId, action) {
+  const confirmed = window.confirm(
+    action === "approved"
+      ? "Approve this payment and activate 30 days of access?"
+      : "Reject this payment request?"
+  );
+
+  if (!confirmed) return;
+
+  show("Updating payment request...", "admin-message");
+
+  const { data: userData, error: userError } =
+    await supabase.auth.getUser();
+
+  if (userError || !userData.user) {
+    return show("Please sign in again.", "admin-message");
+  }
+
+  const { error } = await supabase.rpc("admin_review_payment", {
+    p_payment_request_id: paymentRequestId,
+    p_action: action,
+    p_admin_id: userData.user.id
+  });
+
+  if (error) {
+    return show(error.message, "admin-message");
+  }
+
+  show(
+    action === "approved"
+      ? "Payment approved. Subscription activated."
+      : "Payment request rejected.",
+    "admin-message"
+  );
+
+  await loadPaymentRequests();
 }
 
 if (!supabase) {
   show("Setup required: connect Supabase before student login can work.");
 } else {
   const { data } = await supabase.auth.getSession();
-  showPaymentForm(!!data.session);
+  await updateSession(data.session);
 
   supabase.auth.onAuthStateChange((_event, session) => {
-    showPaymentForm(!!session);
+    setTimeout(() => updateSession(session), 0);
   });
 }
 
 $("auth-form").addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  if (!supabase) {
-    return show("Supabase is not configured.");
-  }
+  if (!supabase) return show("Supabase is not configured.");
 
   const { data, error } = await supabase.auth.signInWithPassword({
     email: $("email").value.trim(),
@@ -50,7 +199,7 @@ $("auth-form").addEventListener("submit", async (event) => {
   if (error) return show(error.message);
 
   show(`Signed in successfully as ${data.user.email}.`);
-  showPaymentForm(true);
+  await updateSession(data.session);
 });
 
 $("signup").addEventListener("click", async () => {
@@ -69,20 +218,32 @@ $("signup").addEventListener("click", async () => {
       : "Account created. Check your email to confirm your account."
   );
 
-  showPaymentForm(!!data.session);
+  await updateSession(data.session);
+});
+
+$("signout").addEventListener("click", async () => {
+  const { error } = await supabase.auth.signOut();
+
+  if (error) return show(error.message);
+
+  setSignedIn(false);
+  $("admin-dashboard").hidden = true;
+  show("You have signed out.");
 });
 
 $("payment-form").addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  if (!supabase) return show("Supabase is not configured.", "payment-message");
+  if (!supabase) {
+    return show("Supabase is not configured.", "payment-message");
+  }
 
   const { data: userData, error: userError } =
     await supabase.auth.getUser();
 
   if (userError || !userData.user) {
     show("Please sign in before uploading your receipt.", "payment-message");
-    return showPaymentForm(false);
+    return setSignedIn(false);
   }
 
   const file = $("receipt").files[0];
@@ -141,5 +302,12 @@ $("payment-form").addEventListener("submit", async (event) => {
   }
 
   $("payment-form").reset();
-  show("Receipt uploaded successfully. Your payment is awaiting admin review.", "payment-message");
+
+  show(
+    "Receipt uploaded successfully. Your payment is awaiting admin review.",
+    "payment-message"
+  );
 });
+
+$("refresh-requests").addEventListener("click", loadPaymentRequests);
+
